@@ -1,0 +1,33 @@
+---
+
+- name: install epel
+  yum: name=http://download.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm state=present
+
+- name: install nginx
+  yum: name=nginx state=present
+
+- name: add nginx start on boot
+  shell: /sbin/chkconfig --add nginx
+
+- name: turn on nginx start on boot
+  shell: /sbin/chkconfig nginx on
+
+- name: create log directory
+  file: path=/var/logs/nginx state=directory owner=nginx group=nginx mode=0755
+
+- name: create enable site directory
+  file: path=/etc/nginx/sites_enabled state=directory owner=nginx group=nginx mode=0755
+
+- name: copy lb conf
+  copy: src=lb.conf dest=/etc/nginx/sites_enabled/lb.conf force=yes
+  notify: reload nginx
+
+- name: config nginx
+  template: src=nginx.conf.j2 dest=/etc/nginx/nginx.conf
+  notify: restart nginx
+
+- name: flush handlers to apply config changes
+  meta: flush_handlers
+
+- name: ensure nginx is running
+  service: name=nginx state=started
